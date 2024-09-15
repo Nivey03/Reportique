@@ -3,6 +3,7 @@ import re
 import sys
 import logging
 import yaml
+import shutil
 import streamlit as st
 from datetime import date
 
@@ -88,7 +89,7 @@ def main():
 
     st.set_page_config(
         page_title="reportiquē",
-        page_icon="https://sambanova.ai/hubfs/logotype_sambanova_orange.png",
+        page_icon="img\\re.png",
     )
 
     if "conversation" not in st.session_state:
@@ -118,15 +119,14 @@ def main():
                 message = save_credentials(url, api_key, prod_mode)
                 st.success(message)
                 st.rerun()
-
+        
         if are_credentials_set():
             if st.session_state.document_retrieval is None:
                 st.session_state.document_retrieval = initialize_document_retrieval()
 
         if st.session_state.document_retrieval is not None:
             st.markdown("**Purpose:**")
-            st.markdown(
-                "Generates detailed reports for IT employees by analyzing and processing the provided code files, utilizing document retrieval and automated content generated technique.")
+            st.markdown("Generates detailed reports for IT employees by analyzing and processing the provided code files, utilizing document retrieval and automated content generated technique.")
             st.markdown("**Follow the instructions.**")
             st.markdown("**1. Upload the files**")
             datasource_options = ["Upload files (create new vector db)"]
@@ -145,8 +145,7 @@ def main():
                         "Add files", accept_multiple_files=True,
                         type=[".eml", ".html", ".json", ".md", ".msg", ".rst", ".rtf", ".txt", ".xml", ".png", ".jpg",
                               ".jpeg", ".tiff", ".bmp", ".heic", ".csv", ".doc", ".docx", ".epub", ".odt", ".pdf",
-                              ".ppt", ".pptx", ".tsv", ".xlsx", ".py", ".c", ".h", ".ino", ".cpp", ".java", ".javac",
-                              ".pyc"]
+                              ".ppt", ".pptx", ".tsv", ".xlsx", ".py", ".c", ".h", ".ino", ".cpp", ".java", ".javac", ".pyc"]
                     )
                 st.markdown("**2. Process your documents**")
                 st.markdown(
@@ -154,6 +153,7 @@ def main():
                 )
                 st.markdown("Create database")
                 if st.button("Process"):
+                    shutil.rmtree("data", ignore_errors=True)
                     with st.spinner("Processing"):
                         try:
                             text_chunks = st.session_state.document_retrieval.parse_doc(docs)
@@ -176,7 +176,7 @@ def main():
 
                             response = response.split('\n')
                             for i in response:
-                                x = re.search("(\d).(\s)(.+)", i)
+                                x = re.search("(\d+).(\s)(.+)", i)
                                 if x != None:
                                     __task__ = x.group(3)
                                     if __task__ not in st.session_state.tasks:
@@ -198,59 +198,40 @@ def main():
                             st.session_state.solutions_suggestions = ''
 
                             for i in response:
-                                x = re.search("(\d).(\s)(.+)", i)
+                                x = re.search("(\d+).(\s)(.+)", i)
                                 if x != None:
                                     __task__ = x.group(0)
                                     st.session_state.solutions_suggestions += (__task__ + '\n')
-
-
+                            
+                            
 
                         except Exception as e:
                             st.error(f"An error occurred while processing: {str(e)}")
 
-            st.markdown("**3. Ask questions about your data!**")
-
-            with st.expander("Additional settings", expanded=False):
-                st.markdown("**Interaction options**")
-                st.markdown(
-                    "**Note:** Toggle these at any time to change your interaction experience"
-                )
-                show_sources = st.checkbox("Show sources", value=True, key="show_sources")
-
-                st.markdown("**Reset chat**")
-                st.markdown(
-                    "**Note:** Resetting the chat will clear all conversation history"
-                )
-                if st.button("Reset conversation"):
-                    st.session_state.chat_history = []
-                    st.session_state.sources_history = []
-                    st.toast(
-                        "Conversation reset. The next response will clear the history on the screen"
-                    )
     st.markdown("<hr style='background-color:green;color:green;height:2px'>", unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
     with col1:
         name = st.text_input("Name")
-
+    
     with col2:
         user_id = st.text_input("ID")
 
     col5, col6 = st.columns(2)
 
     roles = [
-        "Software Development",
-        "Project & Product Management",
-        "Data & Analytics",
-        "Cloud & Infrastructure",
-        "Cybersecurity",
-        "Quality Assurance (QA)",
-        "UI/UX & Design",
-        "IT Support",
-        "Enterprise Solutions & Consulting",
-        "Emerging Technologies",
-        "Leadership & Executive Roles"
-    ]
+    "Software Development",
+    "Project & Product Management",
+    "Data & Analytics",
+    "Cloud & Infrastructure",
+    "Cybersecurity",
+    "Quality Assurance (QA)",
+    "UI/UX & Design",
+    "IT Support",
+    "Enterprise Solutions & Consulting",
+    "Emerging Technologies",
+    "Leadership & Executive Roles"
+    ]   
 
     sub_roles = {
         "Software Development": [
@@ -263,12 +244,10 @@ def main():
         ],
         "Data & Analytics": [
             "Data Scientist", "Data Engineer", "Data Analyst",
-            "Machine Learning Engineer", "AI Engineer", "Business Intelligence Analyst", "Database Administrator (DBA)",
-            "Other"
+            "Machine Learning Engineer", "AI Engineer", "Business Intelligence Analyst", "Database Administrator (DBA)", "Other"
         ],
         "Cloud & Infrastructure": [
-            "Cloud Engineer", "Cloud Architect", "System Administrator", "Network Engineer", "Security Engineer",
-            "Other"
+            "Cloud Engineer", "Cloud Architect", "System Administrator", "Network Engineer", "Security Engineer", "Other"
         ],
         "Cybersecurity": [
             "Cybersecurity Analyst", "Penetration Tester (Ethical Hacker)",
@@ -302,11 +281,11 @@ def main():
     with col6:
         selected_sub_role = st.selectbox("Select Sub-Role", sub_roles[selected_role])
 
-    col3, col4 = st.columns([3, 1])
+    col3, col4 = st.columns([3, 1])  
 
     with col3:
         project_name = st.text_input("Project Name")
-
+        
     with col4:
         start_date = st.date_input("Report Date", date.today())
 
@@ -330,7 +309,7 @@ def main():
 
         with col7:
             st.markdown(f"- {task}", unsafe_allow_html=True)
-
+        
         with col8:
             if st.button("Delete", key=f"delete_{task}"):
                 delete_task(task)
@@ -347,15 +326,13 @@ def main():
             if new_task and new_task not in st.session_state.tasks:
                 st.session_state.tasks.append(new_task)
                 st.success(f"Task '{new_task}' added!")
-                st.experimental_rerun()
+                st.experimental_rerun() 
 
-    st.write("### Detailed Analysis")
-    st.text_area("Your detailed analysis will be shown here.", value=st.session_state.module_response, height=250,
-                 disabled=True)
+    st.write("### Detailed Analysis") 
+    st.text_area("Your detailed analysis will be shown here.", value=st.session_state.module_response, height=250, disabled=True)
 
     with st.expander("Recommended Solutions"):
-        st.text_area("Some recommendations to improve the programs will be displayed here.", height=250,
-                     value=st.session_state.solutions_suggestions, disabled=True)
+        st.text_area("Some recommendations to improve the programs will be displayed here.", height=250, value=st.session_state.solutions_suggestions, disabled=True)
 
     with st.expander("Challenges"):
         challenges = st.text_area("Describe any challenges faced:", height=150)
