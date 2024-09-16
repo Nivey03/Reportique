@@ -11,6 +11,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
 repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 
+
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
@@ -79,6 +80,9 @@ def initialize_document_retrieval():
 
 
 def main():
+
+
+
     with open(CONFIG_PATH, 'r') as yaml_file:
         config = yaml.safe_load(yaml_file)
 
@@ -106,13 +110,30 @@ def main():
         st.session_state.input_disabled = True
     if 'document_retrieval' not in st.session_state:
         st.session_state.document_retrieval = None
+    if 'tasks' not in st.session_state:
+        st.session_state.tasks = []
+    if 'solutions_suggestions' not in st.session_state:
+        st.session_state.solutions_suggestions = ''
+    if 'module_response' not in st.session_state:
+        st.session_state.module_response = ''
+    if 'name' not in st.session_state:
+        st.session_state.name = ''
+    if 'id' not in st.session_state:
+        st.session_state.id = ''
+    if 'role' not in st.session_state:
+        st.session_state.role = ''
+    if 'sub_role' not in st.session_state:
+        st.session_state.sub_role = ''
+    if 'project_name' not in st.session_state:
+        st.session_state.project_name = ''
+    if 'date' not in st.session_state:
+        st.session_state.date = ''
+    
 
     st.title(":green[reportiquē]")
     st.subheader(":grey[Get your reports summarized]")
-    st.session_state.solutions_suggestions = ''
 
     with st.sidebar:
-        st.session_state.module_response = None
         if not are_credentials_set():
             url, api_key = env_input_fields()
             if st.button("Save Credentials", key="save_credentials_sidebar"):
@@ -171,7 +192,6 @@ def main():
 
                             prompt = "suggest DISTINCT titles for all the programs that you have found and also for those programs that are not explicitly mentioned. NUMBER THEM"
                             response = st.session_state.conversation.invoke({"question": prompt})
-                            st.session_state.tasks = []
                             response = response['answer']
 
                             response = response.split('\n')
@@ -195,13 +215,11 @@ def main():
                             response = st.session_state.conversation.invoke({"question": prompt_solutions})
                             response = response['answer'].split('\n')[1:]
 
-                            st.session_state.solutions_suggestions = ''
-
                             for i in response:
                                 x = re.search("(\d+).(\s)(.+)", i)
                                 if x != None:
                                     __task__ = x.group(0)
-                                    st.session_state.solutions_suggestions += (__task__ + '\n')
+                                    st.session_state.solutions_suggestions += (__task__ + '\n') 
                             
                             
 
@@ -212,10 +230,10 @@ def main():
 
     col1, col2 = st.columns(2)
     with col1:
-        name = st.text_input("Name")
+        st.session_state.name = st.text_input("Name")
     
     with col2:
-        user_id = st.text_input("ID")
+        st.session_state.id = st.text_input("ID")
 
     col5, col6 = st.columns(2)
 
@@ -277,22 +295,20 @@ def main():
 
     with col5:
         selected_role = st.selectbox("Select Role", roles)
+        st.session_state.role = selected_role
 
     with col6:
-        selected_sub_role = st.selectbox("Select Sub-Role", sub_roles[selected_role])
+        st.session_state.sub_role = st.selectbox("Select Sub-Role", sub_roles[selected_role])
 
     col3, col4 = st.columns([3, 1])  
 
     with col3:
-        project_name = st.text_input("Project Name")
+        st.session_state.project_name = st.text_input("Project Name")
         
     with col4:
-        start_date = st.date_input("Report Date", date.today())
+        st.session_state.date = st.date_input("Report Date", date.today())
 
     st.markdown("<hr style='background-color:green;color:green;height:2px'>", unsafe_allow_html=True)
-
-    if 'tasks' not in st.session_state:
-        st.session_state.tasks = []
 
     def delete_task(task_to_remove):
         if task_to_remove in st.session_state.tasks:
